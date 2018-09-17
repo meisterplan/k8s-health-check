@@ -4,11 +4,13 @@ This repository provides the small tool `check` which can change [Kubernetes](ht
 
 ## Usage
 
-`check` allows to execute the liveness and the readiness check via `check run -type liveness` and `check run -type readiness` just like usually. However check allows to change the checks dynamically by modifing the `LIVENESS_CHECK` and `READINESS_CHECK` environment variables respectively.
+- `check run -type TYPE` Run the check for **TYPE** as follows: If an override is active, directly return the override, otherwise run the command defined in the environment variable **TYPE**`_CHECK` (e.g. `LIVENESS_CHECK`) and return its exit code.
+- `check lock -type TYPE -state STATE` Set the override for **TYPE** to **STATE**.
+- `check unlock -type TYPE` Deactivate the override for **TYPE**
 
-If you want to lock one of the checks, you can simply run `check lock -type liveness -state success` (will never fail) or `check lock -type liveness -state failure` (will always fail).
+**TYPE** is either `liveness` or `readiness`
 
-In case you want to reset the lock, simply do `check unlock -type liveness`.
+**STATE** is either `success` or `failure`
 
 ## Build
 
@@ -33,11 +35,7 @@ becomes
 
 ```livenessProbe:
   exec:
-  command:
-  - check
-  - run
-  - -type
-  - liveness
+  command: [ "check", "run", "-type", "liveness" ]
   initialDelaySeconds: 5
   periodSeconds: 5
 ```
@@ -48,6 +46,8 @@ and add the following env:
   - name: 'LIVENESS_CHECK'
     value: 'cat /tmp/healthy'
 ```
+
+or directly in the Dockerfile: `ENV LIVENESS_CHECK "cat /tmp/healthy"`
 
 Note that HTTP requests must be converted to using curl, e.g.
 
