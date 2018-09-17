@@ -130,57 +130,41 @@ const readinessStateFileName = "/tmp/readiness.lock"
 func handleRun(checkType CheckType) {
 	switch checkType {
 	case LIVENESS:
-		envLiveLock, err := ioutil.ReadFile(livenessStateFileName)
-		if err == nil {
-			state := ToCheckState(string(envLiveLock))
-			switch state {
-			case SUCCESS:
-				fmt.Println("Liveness check locked at success: 0")
-				os.Exit(0)
-			case FAILURE:
-				fmt.Println("Liveness check locked at failure: 1")
-				os.Exit(1)
-			default:
-				fmt.Println("Invalid value in file ", livenessStateFileName)
-				os.Exit(254)
-			}
-
-		} else {
-			envLiveValue := os.Getenv(livenessCommandEnvName)
-			if len(envLiveValue) == 0 {
-				fmt.Println("env ", livenessCommandEnvName, " must be set")
-				os.Exit(1)
-			}
-			runCommandAndPipeExitCode(envLiveValue)
-		}
+		handleRunForType(LIVENESS, livenessStateFileName, livenessCommandEnvName)
+		return
 
 	case READINESS:
-		envReadyLock, err := ioutil.ReadFile(readinessStateFileName)
-		if err == nil {
-			state := ToCheckState(string(envReadyLock))
-			switch state {
-			case SUCCESS:
-				fmt.Println("Readiness check locked at success: 0")
-				os.Exit(0)
-			case FAILURE:
-				fmt.Println("Readiness check locked at failure: 1")
-				os.Exit(1)
-			default:
-				fmt.Println("Invalid value in file ", readinessStateFileName)
-				os.Exit(254)
-			}
+		handleRunForType(LIVENESS, readinessStateFileName, readinessCommandEnvName)
+		return
 
-		} else {
-			envReadyValue := os.Getenv(readinessCommandEnvName)
-			if len(envReadyValue) == 0 {
-				fmt.Println("env ", readinessCommandEnvName, " must be set")
-				os.Exit(1)
-			}
-			runCommandAndPipeExitCode(envReadyValue)
-		}
 	default:
 		fmt.Println("Unexpected error")
 		os.Exit(255)
+	}
+}
+
+func handleRunForType(checkType CheckType, stateFileName string, commandEnvName string) {
+	envLock, err := ioutil.ReadFile(stateFileName)
+	if err == nil {
+		state := ToCheckState(string(envLock))
+		switch state {
+		case SUCCESS:
+			fmt.Println(checkType, " check locked at success: 0")
+			os.Exit(0)
+		case FAILURE:
+			fmt.Println(checkType, " check locked at failure: 1")
+			os.Exit(1)
+		default:
+			fmt.Println("Invalid value in file ", stateFileName)
+			os.Exit(254)
+		}
+	} else {
+		envValue := os.Getenv(commandEnvName)
+		if len(envValue) == 0 {
+			fmt.Println("env ", commandEnvName, " must be set")
+			os.Exit(1)
+		}
+		runCommandAndPipeExitCode(envValue)
 	}
 }
 
