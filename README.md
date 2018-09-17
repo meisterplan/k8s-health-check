@@ -55,11 +55,12 @@ Note that HTTP requests must be converted to using curl, e.g.
       httpGet:
         path: /healthz
         port: 8080
+      timeoutSeconds: 1
 ```
 
 becomes
 
 ```env:
   - name: 'LIVENESS_CHECK'
-    value: 'curl -sf localhost:8080/healthz'
+    value: 'curl -m 1 -sf localhost:8080/healthz'
 ```
