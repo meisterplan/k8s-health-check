@@ -35,7 +35,7 @@ becomes
 
 ```livenessProbe:
   exec:
-  command: [ "check", "run", "-type", "liveness" ]
+    command: [ "check", "run", "-type", "liveness" ]
   initialDelaySeconds: 5
   periodSeconds: 5
 ```
